@@ -1,0 +1,51 @@
+---
+title: "ML - Assignment 1"
+author: "Brandon Palazzo"
+date: "9/13/2020"
+output: html_document
+---
+
+```{r}
+# Upload cereals.csv file into R Studio
+# Cereals.csv is from our class's Blackboard
+
+cereal_data <- read.csv("cereals.csv", header = T, sep = ",")
+```
+
+```{r}
+# Quantitative descriptive stats
+# Quantitative variables in cereals.csv include: calories, protein, fat, sodium, fiber, carbo, sugars, potass, vitamins, weight, cups, rating
+
+mean(cereal_data$calories)
+
+median(cereal_data$protein)
+
+sd(cereal_data$sodium)
+
+quantile(cereal_data$fiber)
+```
+
+```{r}
+# Transform a variable
+
+scale(cereal_data$calories, center = T, scale = T )
+```
+
+
+
+```{r}
+# Categorical descriptive stats
+# Categorical variables in cereals.csv include: mfr, type, shelf
+library(ggplot2)
+bargraph <- ggplot(cereal_data, aes(mfr)) + geom_bar() + theme_classic()
+bargraph
+```
+
+```{r}
+# Quantitative graph and scatter plot 
+histogram <- ggplot(cereal_data, aes(protein)) + geom_histogram() + theme_classic()
+histogram
+
+scatterplot <- ggplot(cereal_data, aes(x = carbo, y = sugars)) + geom_point()
+scatterplot
+```
