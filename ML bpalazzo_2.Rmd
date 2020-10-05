@@ -1,0 +1,133 @@
+---
+title: "ML Assignment 2"
+author: "Brandon Palazzo"
+date: "10/4/2020"
+output: html_document
+---
+
+Libraries and CSV file
+
+```{r}
+library(caret)
+library(ggplot2)
+library(lattice)
+library(dplyr)
+library(FNN)
+library(gmodels)
+library(class)
+Bank_Data <- read.csv("UniversalBank.csv")
+str(Bank_Data)
+```
+Partition the data into 60% (Training Data) and 40% (Validation)
+
+```{r}
+set.seed(123)
+Train_Index = createDataPartition(Bank_Data$Personal.Loan,p=0.6, list=FALSE) 
+Train_Data = Bank_Data[Train_Index,]
+Validation_Data = Bank_Data[-Train_Index,] 
+
+``` 
+
+Normalization of the Data
+```{r}
+normalize <-function(x) { + return((x - min(x)) / (max(x) - min(x)))}
+
+Train_n <- as.data.frame(lapply(Train_Data[,c(2:9)], normalize))
+Validation_n <- as.data.frame(lapply(Validation_Data[,c(2:9)], normalize))
+summary(Train_n)
+summary(Validation_n)
+```
+
+KNN Modeling
+```{r}
+Train_target <- Train_Data[,10]
+Validation_target <- Validation_Data[,10]
+
+m1 <- knn(train = Train_Data, test = Validation_Data, cl = Train_target, k = 1)
+
+
+
+Train_target
+
+
+
+
+```
+Confusion Matrix
+
+For my confusion maxtrix, the model was able to find 1695 true negatives, 33 true positives, 103 false positives, and 169 false negatives. Our model was able to actually identify individuals who would take out a personal loan or not correctly 86.4% of the time. 5.15% of the time the model would label an individual who would not take out a personal loan as someone who would. 8.45% of the time the model would incorrectly label someone who wouldn't take out a personal but they actually do.   
+```{r}
+
+table(Validation_target, m1)
+
+```
+
+Optimizing K
+
+It is important to find the best k in order to not overfit or underfit the model. Overfitting is when a model models the training data too well and can't generalize beyond its training sample. Underfitting refers to a model that can not model the training data well or predict outside the sample data.
+```{r}
+
+# initialize a data frame with two columns: k, and accuracy.
+
+accuracy.df <- data.frame(k = seq(1, 14, 1), accuracy = rep(0, 14))
+
+# compute knn for different k on validation.
+for(i in 1:14) {
+  knn.pred <- knn(Train_Data, Validation_Data, 
+                  cl = Train_target, k = i)
+  accuracy.df[i, 2] <- confusionMatrix(knn.pred, Validation_target)
+}
+accuracy.df
+
+```
+
+
+
+Repartition the data {50%, 30%, 20%}
+
+```{r}
+set.seed(124)
+Train_Index2 = createDataPartition(Bank_Data$Personal.Loan,p=0.5, list=FALSE) 
+Train_Data2 = Bank_Data[Train_Index,]
+TrainVal2 = Bank_Data[-Train_Index,] 
+TrainVal3 =createDataPartition(TrainVal2$Personal.Loan,p=0.6, list=FALSE)
+Validation_Data2 = TrainVal2[TrainVal3]
+Test_Data2 = TrainVal2[-TrainVal3]
+
+```
+
+Normalize
+```{r}
+
+Train_n2 <- as.data.frame(lapply(Train_Data2[,c(2:9)], normalize))
+Validation_n2 <- as.data.frame(lapply(Validation_Data2[,c(2:9)], normalize))
+Test_n2 <- as.data.frame(lapply(Test_Data2[,c(2:9)], normalize))
+summary(Train_n2)
+summary(Validation_n2)
+summary(Test_n2)
+
+```
+KNN Modeling
+```{r}
+Train_target2 <- Train_Data2[,10]
+Validation_target2 <- Validation_Data2[,10]
+
+m2 <- knn(train = Train_Data2, test = Validation_Data2, cl = Train_target2, k = 1)
+
+
+
+```
+Confusion Matrix
+```{r}
+
+table(Validation_target2, m2)
+
+```
+
+
+
+
+
+
+
+
