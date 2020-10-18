@@ -1,0 +1,104 @@
+---
+title: "ML bpalazzo_3"
+author: "Brandon Palazzo"
+date: "10/12/2020"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r}
+library(caret)
+library(lattice)
+library(ggplot2)
+library(e1071)
+library(gmodels)
+library(pROC)
+data<- read.csv("FlightDelays.csv") 
+str(data)
+```
+
+Making Flight.Status Categorical
+```{r}
+data$Flight.Status2[data$Flight.Status == "ontime"] = 0
+data$Flight.Status2[data$Flight.Status == "delayed"] = 1
+str(data)
+
+```
+
+Making predictor variables as factors
+
+```{r}
+data$DAY_WEEK <- as.factor(data$DAY_WEEK)
+data$CRS_DEP_TIME <- as.factor(data$CRS_DEP_TIME)
+data$ORIGIN <- as.factor(data$ORIGIN)
+data$DEST <- as.factor(data$DEST)
+data$CARRIER <- as.factor(data$CARRIER)
+data$Flight.Status2 <- as.factor(data$Flight.Status2)
+```
+
+
+Parition the data
+```{r}
+data2 <- data[, c(1,2,4,8,10,14)]
+
+str(data2)
+
+set.seed(123)
+Index_Train<-createDataPartition(data2$Flight.Status2, p=0.6, list=FALSE)
+Train <-data2[Index_Train,]
+Test  <-data2[-Index_Train,]
+
+str(Train)
+str(Test)
+
+```
+Building a naïve Bayes classifier
+
+```{r}
+nb_model <-naiveBayes(Flight.Status2~CRS_DEP_TIME+CARRIER+DEST+ORIGIN+DAY_WEEK,data = Train)
+nb_model
+```
+
+Counts and Proportion Table for DEST
+
+```{r}
+
+table(data2$Flight.Status2, data2$DEST)
+prop.table(table(data2$Flight.Status2, data2$DEST))
+
+
+```
+
+
+Model the test set
+
+```{r}
+Predicted_Test_labels <-predict(nb_model,Test)
+
+CrossTable(x=Test$Flight.Status2,y=Predicted_Test_labels, prop.chisq = FALSE) 
+
+confusionMatrix(table(Predicted_Test_labels, Test$Flight.Status2))
+
+
+```
+
+Raw Prediction Probablities
+```{r}
+nb_model <- naiveBayes(Flight.Status2~CRS_DEP_TIME+CARRIER+DEST+ORIGIN+DAY_WEEK,data = Train)
+
+Predicted_Test_labels <-predict(nb_model,Test, type = "raw")
+
+```
+
+ROC Curve
+```{r}
+
+roc(Test$Flight.Status2, Predicted_Test_labels[,2])
+
+plot.roc(Test$Flight.Status2,Predicted_Test_labels[,2])
+
+```
+
+
+
