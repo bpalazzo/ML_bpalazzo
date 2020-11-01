@@ -1,0 +1,226 @@
+---
+title: "ML bpalazzo_4"
+author: "Brandon Palazzo"
+date: "10/24/2020"
+output: pdf_document
+---
+
+```{r}
+library(dplyr)
+library(factoextra)
+library(ggplot2)
+library(GGally)
+
+
+
+uni_data <- read.csv("Universities.csv")
+
+
+
+```
+
+Clean the data
+```{r}
+  uni_data <- na.omit(uni_data)
+
+  
+```
+Normalize the data
+```{r}
+  uni_data_num <- uni_data[, c(-1,-2,-3)]
+ 
+
+  uni_data_num <- scale(uni_data_num)
+  distance <- get_dist(uni_data_num)
+  fviz_dist(distance)
+
+  
+```
+
+
+
+Determining the optimal k
+
+```{r}
+
+fviz_nbclust(uni_data_num, kmeans, method = "silhouette")
+
+
+```
+
+
+Before finding the optimal k, I predict that a reasonable amount of clusters should be anywhere from 2-4. After performing the silhouette method, we have determined the optimal k to be 3. Three clusters should be a perfect match to properly fit the data without overfitting.  
+
+
+
+
+
+K Means Algorithm
+
+```{r}
+
+k3 <- kmeans(uni_data_num, centers = 3, nstart = 25) 
+
+
+
+k3$centers 
+
+
+```
+
+
+```{r}
+
+k3$size 
+
+```
+
+
+
+```{r}
+
+k3$cluster
+
+
+```
+
+
+
+```{r}
+
+fviz_cluster(k3, data = uni_data_num)
+
+clust <- k3$cluster
+uni_data_num_clus <- cbind(uni_data_num, clust) 
+
+
+ggparcoord(uni_data_num_clus, columns = 1:3, groupColumn = 18)
+ggparcoord(uni_data_num_clus, columns = 4:7, groupColumn = 18)
+ggparcoord(uni_data_num_clus, columns = 8:10, groupColumn = 18)
+ggparcoord(uni_data_num_clus, columns = 11:13, groupColumn = 18)
+ggparcoord(uni_data_num_clus, columns = 14:17, groupColumn = 18)
+
+```
+
+
+Cluster 1: Small, Local, Commonly Private Schools. These schools have very few/low top 10 and 25 students, graduation rate, and faculty with a PHD. These schools also have low amount of applications received/accepted, new students enrolled, full-time/part-time undergrad, in-state/out-state tuition, room, and board. These schools have around avg admin fees, book cost, and personal loan amounts. Lastly, this cluster has a high faculty to student ratio. 
+
+Cluster 2: Expensive, Exclusive, Private Schools. These schools have a low amount of students enrolled, full-time/part-time undergrad, personal student loans,and a very low student/faculty ratio. These schools have an avg amount of applications received/accepted, admin fees, and book costs. Lastly, these schools have very high amount of top 10 and 25 students, in-state/out-state tuition, room, board, faculty with PHD's, and graduation rate.
+
+Cluster 3: Big, Inexpensive, Public Schools. These schools have super low in-state tuition, very low out-state tuition, low board, and low graduation rate. These schools have an avg amount of top 10 students and room costs. Lastly, these schools have super high amount of applications received/accepted, students enrolled, full-time/part-time students, personal loan amounts, very high faculty/student ratio, faculty with PHD, high admin fees, book costs, and slightly high top 25 students.
+
+
+
+
+Clusters by State
+```{r}
+
+ table(uni_data$State, k3$cluster)
+uni_data_clus <- cbind(uni_data, clust)
+
+                            
+
+p <- ggplot(data= uni_data_clus, aes(x= State, y=clust)) +
+  geom_bar(stat="identity", width = 0.5) 
+p
+
+```
+
+
+After comparing the state and the number of each cluster, the only relationship is that the larger states tend to have more universities, however because of the amount of schools we had to leave off because of missing data, it is hard to draw a concise conclusion.
+
+
+
+```{r}
+
+table(uni_data$Public..1...Private..2., k3$cluster)
+
+
+
+```
+
+
+After comparing whether a school is public or private and the number of clusters in each category, we notice that cluster 2 is for private schools, cluster 3 is for public schools, and cluster one favors private school, but can also be public as well. 
+
+
+
+Generally speaking, most universities in the United States fall into three different categories. Those categories include big, state schools, small private or local colleges, and fancy, expensive private schools. For instance, our school, Kent State, would fall into cluster 3 because of our large size, inexpensive tuition, and high amounts of personal loans.
+
+
+
+
+
+
+Tufts University
+
+```{r}
+
+tufts_pt <- mean(uni_data$X..PT.undergrad)
+
+tufts_pt
+
+new_row <- c("Tufts University", "MA",	2,	7614, 3605,	1205,	60,	90,	4598,	797.4544,	19701,	19701,	3038,	2930,	503,	600,	928,	99,	10.3,	92)
+uni_data_tufts <- rbind(uni_data, new_row)
+
+uni_data_tufts_num <- uni_data_tufts[, c(-1,-2,-3)]
+
+
+
+uni_data_tufts_num$X..appli..rec.d <- as.numeric(uni_data_tufts_num$X..appli..rec.d)
+uni_data_tufts_num$X..appl..accepted <- as.numeric(uni_data_tufts_num$X..appl..accepted)
+uni_data_tufts_num$X..new.stud..enrolled <- as.numeric(uni_data_tufts_num$X..new.stud..enrolled)
+uni_data_tufts_num$X..new.stud..from.top.10. <- as.numeric(uni_data_tufts_num$X..new.stud..from.top.10.)
+uni_data_tufts_num$X..new.stud..from.top.25. <- as.numeric(uni_data_tufts_num$X..new.stud..from.top.25.)
+uni_data_tufts_num$X..FT.undergrad <- as.numeric(uni_data_tufts_num$X..FT.undergrad)
+uni_data_tufts_num$X..PT.undergrad <- as.numeric(uni_data_tufts_num$X..PT.undergrad)
+uni_data_tufts_num$in.state.tuition <- as.numeric(uni_data_tufts_num$in.state.tuition)
+uni_data_tufts_num$out.of.state.tuition <- as.numeric(uni_data_tufts_num$out.of.state.tuition)
+uni_data_tufts_num$room <- as.numeric(uni_data_tufts_num$room)
+uni_data_tufts_num$board <- as.numeric(uni_data_tufts_num$board)
+uni_data_tufts_num$add..fees <- as.numeric(uni_data_tufts_num$add..fees)
+uni_data_tufts_num$estim..book.costs <- as.numeric(uni_data_tufts_num$estim..book.costs)
+uni_data_tufts_num$estim..personal.. <- as.numeric(uni_data_tufts_num$estim..personal..)
+uni_data_tufts_num$X..fac..w.PHD <- as.numeric(uni_data_tufts_num$X..fac..w.PHD)
+uni_data_tufts_num$stud..fac..ratio <- as.numeric(uni_data_tufts_num$stud..fac..ratio)
+uni_data_tufts_num$Graduation.rate <- as.numeric(uni_data_tufts_num$Graduation.rate)
+
+  
+
+uni_data_tufts_scale <- scale(uni_data_tufts_num)
+
+
+
+k3_tufts <- kmeans(uni_data_tufts_scale, centers = 3, nstart = 25)
+
+k3_tufts$cluster[472]
+
+```
+
+Our kmeans clustering algorithm classifies Tufts University as cluster 2; small, private, exclusive university.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
