@@ -1,0 +1,217 @@
+---
+title: "ML bpalazzo_5"
+author: "Brandon Palazzo"
+date: "11/30/2020"
+output:
+  word_document: default
+  pdf_document: default
+---
+
+Data Cleaning and Manipulation
+```{r}
+library(tidyverse)  
+library(cluster)    
+library(factoextra) 
+library(dendextend)
+library(caTools)
+library(clValid)
+
+cereals <- read.csv("Cereals.csv")
+
+row.names(cereals) <- cereals[,1]
+
+cereals <- cereals[,-1]
+
+str(cereals)
+
+cereals <- na.omit(cereals)
+
+cereals_num <- cereals[, c(-1, -2, -12)]
+
+cereals_num_scale <- scale(cereals_num)
+
+
+```
+
+
+
+Compute Euclidean distance
+```{r}
+
+d <- dist(cereals_num_scale, method = "euclidean")
+
+
+hc_com <- agnes(d, method = "complete")
+hc_avg <- agnes(d, method = "average")
+hc_sin <- agnes(d, method = "single")
+hc_ward <- agnes(d, method = "ward")
+
+
+hc_com$ac   # 0.8469328
+hc_avg$ac   # 0.7881955
+hc_sin$ac   # 0.6072384
+hc_ward$ac  # 0.9087265
+
+#Based on the highest agglomerative coefficient, the best method to use for this problem is Ward's Method.
+
+#The biggest difference between hierarchical and k-means clustering is that k-means requires a pre-specified amount of clusters and hierarchical does not. Hierarchical clustering puts the clusters in a hierarchical form, which makes it much easier to interpret. Hierarchical clustering is preferred when you don't have a specific set of clusters needed to be defined. 
+
+pltree(hc_ward, cex = 0.6, hang = -1, main = "Dendrogram of Agnes")
+```
+
+Determining how many clusters to use
+
+```{r}
+fviz_nbclust(cereals_num_scale, FUN = hcut, method = "silhouette", k.max = 15) + ggtitle("Silouette")
+
+
+#Based on the silhouette method and studying the dendrogram,the ideal amount of clusters is 12.
+
+
+```
+
+```{r}
+
+cluster_groups <- cutree(hc_ward, k = 12)
+cluster_groups
+tapply(cereals$calories, cluster_groups, mean)
+
+
+```
+
+
+
+
+
+
+Stability Testing
+
+```{r}
+
+
+
+
+smp_size <- floor(0.75 * nrow(cereals_num_scale))
+
+
+set.seed(123)
+train_ind <- sample(seq_len(nrow(cereals_num_scale)), size = smp_size)
+
+train <- cereals_num_scale[train_ind, ]
+test <- cereals_num_scale[-train_ind, ]
+
+train
+
+
+
+```
+
+
+```{r}
+
+hc2_avg <- agnes(train, method = "average")
+
+hc2_avg$ac # 0.7492276
+
+pltree(hc2_avg, cex = 0.6, hang = -1, main = "Dendrogram of Training Data")
+
+
+```
+
+```{r}
+fviz_nbclust(train, FUN = hcut, method = "silhouette", k.max = 15) + ggtitle("(C) Silouette")
+
+cluster_groups2 <- cutree(hc2_avg, k = 10)
+
+cluster_groups2
+
+#Comparing the assignment of clusters from the original set of data to the training set, which had 75% of the original cereals, I was able to find a lot of similarities between the data sets. For example, cereals such as Cap "n" Crunch and Apple Jacks, both were in the same cluster for both sets of data. The clusters between each set may be different numbers, but they still have the same cereals with common similarities. These clusters are very stable based on the similarities between the data sets.
+
+```
+
+
+
+
+
+
+
+Elementary Healthy Cereal Choices
+
+```{r}
+#  The data should not be normalized at first because the school would have constraints on what a cereal should have for each attribute, calories, fats, carbs, etc, to be considered healthy. If we normalize too early, we won't be able to tell if each cereal meets the minimum requirements to be considered "healthy" by the school's standards. Once all the cereals that don't meet the schools standards are filtered, then the data set can be normalized. Once the data is normalized, you can perform a typical cluster analysis.
+
+```
+
+Comparing Hierarchical and K-means Clustering
+
+```{r}
+
+#Hierarchical and k-means clustering both group data points into clusters with similar attributes. Hierarchical clustering has the advantage of not needing to pre-specify the amount of clusters needed for the clustering algorithm to function, where as k-means needs a pre-determined amount of clusters. This gives the user the ability to interpret the dendrogram in many different ways. It is important to make sure that you have a great understanding of the data before hand to make better interpretations. The best way to compare the algorithms is to compare the clusters of both and see which data points are grouped with which.
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
